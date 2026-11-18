@@ -35,9 +35,17 @@ See also L</KNOWN ISSUES> and L</SECURITY CONSIDERATIONS>.
 
 =cut
 
+=attr message
+
+This is an L<HTTP::Message> or a L<Plack::Request>.
+
+Note that you can pass a L<PSGI> environment hash reference to the constructor.
+
+=cut
+
 has message => (
     is       => 'ro',
-    isa      => InstanceOf ['HTTP::Message'],
+    isa      => InstanceOf [ qw/ HTTP::Message Plack::Request / ],
     required => 1,
     handles  => [qw/ as_string headers /],
 );
@@ -45,8 +53,10 @@ has message => (
 has is_request => (
     is      => 'lazy',
     isa     => Bool,
-    builder => sub($self) { $self->message->isa("HTTP::Request") },
-
+    builder => sub($self) {
+        my $message = $self->message;
+        return $message->isa("HTTP::Request") || $message->isa("Plack::Request");
+    },
 );
 
 has is_response => (
@@ -186,13 +196,15 @@ sub _generate_signature_base( $self, $tag ) {
 
 sub _get_derived_field( $self, $field ) {
 
+    # Note: HTTP::Message has uri_canonical but Plack::Request does not.
+
     state %handlers = (
         '@status'     => sub( $message, $ ) { $message->code },
         '@method'     => sub( $message, $ ) { $message->method },
-        '@target-uri' => sub( $message, $ ) { $message->uri_canonical },
-        '@authority'  => sub( $message, $ ) { $message->uri_canonical->authority },
-        '@scheme'     => sub( $message, $ ) { $message->uri_canonical->scheme },
-        '@path'       => sub( $message, $ ) { $message->uri_canonical->path },
+        '@target-uri' => sub( $message, $ ) { $message->uri },
+        '@authority'  => sub( $message, $ ) { $message->uri->authority },
+        '@scheme'     => sub( $message, $ ) { $message->uri->scheme },
+        '@path'       => sub( $message, $ ) { $message->uri->path },
         '@query'      => sub( $message, $ ) {
             my $query = $message->uri_canonical->query;
             if ( defined $query ) {
@@ -223,6 +235,20 @@ sub _get_derived_field( $self, $field ) {
     $qfield .= ";${param}" if defined $param;
 
     return ( maybe $qfield => $handlers{$key}->( $self->message, $param ) );
+}
+
+sub BUILDARGS( $class, @args ) {
+
+    my %args = @args == 1 && is_plain_hashref($args[0]) ? $args[0]->%* : @args;
+
+    my $message = $args{message};
+    if (is_plain_hashref($message)) {
+        require Plack::Request;
+        $args{message} = Plack::Request->new($message);
+
+    }
+
+    return \%args;
 }
 
 =head1 KNOWN ISSUES
