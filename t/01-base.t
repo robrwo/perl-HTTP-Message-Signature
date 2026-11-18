@@ -17,10 +17,10 @@ subtest "base from headers" => sub {
 
     ok my $sig = HTTP::Message::Signature->new( message => $res );
 
-    ok my $base = $sig->_generate_signature_base(), '_generate_signature_base';
+    ok my $base = $sig->_generate_signature_base('sig1'), '_generate_signature_base';
 
     is $base, "\"\@authority\": example.com
-signature-agent: \"https://example.com\"
+\"signature-agent\": \"https://example.com\"
 \@signature-params: (\"\@authority\" \"signature-agent\");created=1794878989;expires=1794879049;keyid=\"VGVzdERhdGE=\";alg=\"ed25519\";tag=\"web-bot-auth\"";
 
 };

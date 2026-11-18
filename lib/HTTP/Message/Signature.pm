@@ -5,6 +5,7 @@ use v5.24;
 use Moo;
 
 use Carp        qw( carp croak );
+use Crypt::PK::Ed25519;
 use Crypt::PRNG qw(random_bytes_b64u);
 use Hash::MultiValue;
 use HTTP::Headers::Fast;
@@ -12,8 +13,10 @@ use HTTP::Message;
 use HTTP::Tiny;
 use Hash::Ordered;
 use JSON::MaybeXS qw( decode_json );
-use List::Util    qw( pairmap );
+use List::Util    qw( first pairmap );
+use MIME::Base64  qw( decode_base64 );
 use PerlX::Maybe  qw( maybe );
+use Ref::Util     qw( is_plain_hashref );
 use String::Util  qw( unquote );
 use Types::Common qw( Bool HashRef InstanceOf NonEmptyStr  );
 use Types::URI    qw( Uri );
@@ -124,7 +127,29 @@ has public_keys => (
     },
 );
 
-sub _generate_signature_base( $self, $tag = undef ) {
+
+sub verify($self, $tag = undef) {
+
+    my $kid = unquote( $self->signature_input->{keyid} )
+        or croak "not keyid was found in the signature-input";
+
+    my $key = first { $_->{kid} eq $kid } $self->public_keys->{keys}->@*
+      or croak "keyid '${kid}' was not found in the public keys";
+
+    croak "unsupposed algorithm" unless $key->{crv} eq "Ed25519";
+
+    my $pk = Crypt::PK::Ed25519->new();
+    $pk->import_key($key);
+
+    ($tag) = sort $self->signature_tags unless defined $tag;
+    my $sig = decode_base64( $self->signature_header->{$tag} );
+
+    my $base = $self->_generate_signature_base($tag);
+
+    return $pk->verify_message( $sig, $base );
+}
+
+sub _generate_signature_base( $self, $tag ) {
 
     my @buffer;
 
@@ -139,8 +164,6 @@ sub _generate_signature_base( $self, $tag = undef ) {
         $seen->set( lc $field => 1 );
         push @buffer, $line;
     }
-
-    ($tag) = $self->signature_tags unless defined $tag;
 
     my $input  = $self->signature_input->{$tag} or croak "signature-input tag ${tag} was not found";
     my @fields = map { unquote($_) } split / /, unquote( $input, braces => 1 );
