@@ -6,6 +6,7 @@ use Moo;
 
 use Carp        qw( carp croak );
 use Crypt::PRNG qw(random_bytes_b64u);
+use Hash::MultiValue;
 use HTTP::Headers::Fast;
 use HTTP::Message;
 use HTTP::Tiny;
@@ -62,6 +63,31 @@ has signature_agent_uri => (
     },
 );
 
+has signature_input => (
+    is      => 'lazy',
+    isa     => InstanceOf ['Hash::MultiValue'],
+    builder => sub($self) {
+        my $input = $self->headers->header("signature-input");
+
+        # TODO: use a proper HTTP Structured Field (RFC 9651) parser
+        return Hash::MultiValue->new( map { split /(*nlb:=)=(*nla:=)/ } split /[;]s*/, $input );
+    }
+);
+
+has signature_header => (
+    is      => 'lazy',
+    isa     => InstanceOf ['Hash::MultiValue'],
+    builder => sub($self) {
+        my $input = $self->headers->header("signature");
+
+        # TODO: use a proper HTTP Structured Field (RFC 9651) parser
+        return Hash::MultiValue->new( map { split /(*nlb:=)=(*nla:=)/ } split /[,]s*/, $input );
+    },
+    handles => {
+        signature_tags => 'keys',
+    },
+);
+
 has public_keys_json => (
     is      => 'lazy',
     isa     => NonEmptyStr,
@@ -99,5 +125,99 @@ has public_keys => (
         return decode_json( $self->public_keys_json );
     },
 );
+
+sub _generate_signature_base( $self, $tag = undef ) {
+
+    my @buffer;
+
+    my $seen = Hash::Ordered->new;
+
+    my sub _process_header_field( $field, $value ) {
+
+        # TODO serialize line as per "component-identifier ABNF rule"
+        # TODO canonicalize the field value
+        my $line = sprintf( '%s: %s', lc($field), $value // "" );
+        croak "component has already been added to the sginature base" if $seen->exists( lc $field );
+        $seen->set( lc $field => 1 );
+        push @buffer, $line;
+    }
+
+    ($tag) = $self->signature_tags unless defined $tag;
+
+    my $input  = $self->signature_input->{$tag} or croak "signature-input tag ${tag} was not found";
+    my @fields = map { unquote($_) } split / /, unquote( $input, braces => 1 );
+
+    for my $field (@fields) {
+        if ( substr( $field, 0, 1 ) eq '@' ) {
+            _process_header_field( $self->_get_derived_field($field) );
+        }
+        else {
+            _process_header_field( $field => $self->headers->header($field) );
+        }
+    }
+
+    my $header = $self->headers->header("signature-input");
+    croak "unexpected signature-input" unless substr( $header, 0, length($tag) + 1 ) eq "${tag}=";
+    my $params = substr( $header, length($tag) + 1 );
+    _process_header_field( '@signature-params' => $params );
+
+    return join( "\n", @buffer );
+}
+
+sub _get_derived_field( $self, $field ) {
+
+    state %handlers = (
+        '@status'     => sub( $message, $ ) { $message->code },
+        '@method'     => sub( $message, $ ) { $message->method },
+        '@target-uri' => sub( $message, $ ) { $message->uri_canonical },
+        '@authority'  => sub( $message, $ ) { $message->uri_canonical->authority },
+        '@scheme'     => sub( $message, $ ) { $message->uri_canonical->scheme },
+        '@path'       => sub( $message, $ ) { $message->uri_canonical->path },
+        '@query'      => sub( $message, $ ) {
+            my $query = $message->uri_canonical->query;
+            if ( defined $query ) {
+                return '?' . $query;
+            }
+            return undef;
+        },
+        '@query-param' => sub( $message, $param ) {
+            if ( my ($name) = $param =~ /\A name = " (\w+) " \z/ax ) {
+
+                # Note: RFC 9421 Sec 2.2.8 says named parameters with multiple values must not be included
+                return $message->uri_canonical->query_param($name);
+            }
+        },
+    );
+
+    my ( $key, $param, @extra ) = split /;/, $field;
+
+    croak "extra parameters in field ${field}" if @extra;
+
+    if ( my ($quoted) = $key =~ /\A " ( \@ (?:\w+-)* \w+ ) "\z/ax ) {
+        $key = $quoted;
+    }
+
+    croak "unsupported field ${field}" unless exists $handlers{$key};
+
+    my $qfield = "\"${key}\"";
+    $qfield .= ";${param}" if defined $param;
+
+    return ( maybe $qfield => $handlers{$key}->( $self->message, $param ) );
+}
+
+=head1 KNOWN ISSUES
+
+=head2 Multiple Signatures
+
+The current version of this module does not support multiple signatures.
+
+=head1 SECURITY CONSIDERATIONS
+
+=head2 Structured Fields
+
+The current version of this module uses regular expressions for splitting dictionary and parameter fields,
+rather than using an HTTP Structured Field (RFC 9651) parser.
+
+=cut
 
 1;
