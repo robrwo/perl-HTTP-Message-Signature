@@ -8,7 +8,6 @@ use Carp        qw( carp croak );
 use Crypt::PK::Ed25519;
 use Crypt::PRNG qw(random_bytes_b64u);
 use Hash::MultiValue;
-use HTTP::Headers::Fast;
 use HTTP::Message;
 use HTTP::Tiny;
 use Hash::Ordered;
