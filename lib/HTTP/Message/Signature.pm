@@ -23,6 +23,16 @@ use experimental qw( signatures );
 
 use namespace::autoclean;
 
+=head1 STATUS
+
+This module is an experimental prototype.
+
+The user interface is subject to change.
+
+See also L</KNOWN ISSUES> and L</SECURITY CONSIDERATIONS>.
+
+=cut
+
 has message => (
     is       => 'ro',
     isa      => InstanceOf ['HTTP::Message'],
