@@ -182,14 +182,14 @@ sub _generate_signature_base( $self, $tag ) {
             _process_header_field( $self->_get_derived_field($field) );
         }
         else {
-            _process_header_field( $field => $self->headers->header($field) );
+            _process_header_field( "\"${field}\"" => $self->headers->header($field) );
         }
     }
 
     my $header = $self->headers->header("signature-input");
     croak "unexpected signature-input" unless substr( $header, 0, length($tag) + 1 ) eq "${tag}=";
     my $params = substr( $header, length($tag) + 1 );
-    _process_header_field( '@signature-params' => $params );
+    _process_header_field( '"@signature-params"' => $params );
 
     return join( "\n", @buffer );
 }

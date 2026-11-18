@@ -21,7 +21,7 @@ subtest "base from headers" => sub {
 
     is $base, "\"\@authority\": example.com
 \"signature-agent\": \"https://example.com\"
-\@signature-params: (\"\@authority\" \"signature-agent\");created=1794878989;expires=1794879049;keyid=\"VGVzdERhdGE=\";alg=\"ed25519\";tag=\"web-bot-auth\"";
+\"\@signature-params\": (\"\@authority\" \"signature-agent\");created=1794878989;expires=1794879049;keyid=\"VGVzdERhdGE=\";alg=\"ed25519\";tag=\"web-bot-auth\"";
 
 };
 
