@@ -15,7 +15,7 @@ use JSON::MaybeXS qw( decode_json );
 use List::Util    qw( pairmap );
 use PerlX::Maybe  qw( maybe );
 use String::Util  qw( unquote );
-use Types::Common qw( Any ArrayRef Bool Dict InstanceOf NonEmptyStr Optional PositiveInt Slurpy  );
+use Types::Common qw( Bool HashRef InstanceOf NonEmptyStr  );
 use Types::URI    qw( Uri );
 use URI;
 
@@ -118,19 +118,7 @@ has public_keys_json => (
 
 has public_keys => (
     is  => 'lazy',
-    isa => Dict [
-        keys => ArrayRef [
-            Dict [
-                kid => NonEmptyStr,
-                nbf => Optional [PositiveInt],
-                exp => Optional [PositiveInt],
-                crv => Optional [NonEmptyStr],
-                Slurpy [Any],
-            ]
-        ],
-        purpose => Optional [NonEmptyStr],
-        Slurpy [Any]
-    ],
+    isa => HashRef, # TODO make strict validation optional
     builder => sub($self) {
         return decode_json( $self->public_keys_json );
     },
