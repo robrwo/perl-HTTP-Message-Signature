@@ -175,6 +175,7 @@ sub _generate_signature_base( $self, $tag ) {
     }
 
     my $input  = $self->signature_input->{$tag} or croak "signature-input tag ${tag} was not found";
+
     my @fields = map { unquote($_) } split / /, unquote( $input, braces => 1 );
 
     for my $field (@fields) {
