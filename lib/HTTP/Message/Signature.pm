@@ -16,7 +16,9 @@ use List::Util    qw( first pairmap );
 use MIME::Base64  qw( decode_base64 );
 use PerlX::Maybe  qw( maybe );
 use Ref::Util     qw( is_plain_hashref );
-use String::Util  qw( unquote );
+use String::Util  qw( trim unquote );
+use Syntax::Keyword::Match;
+use Syntax::Operator::Equ;
 use Types::Common qw( Bool HashRef InstanceOf NonEmptyStr  );
 use Types::URI    qw( Uri );
 use URI;
@@ -90,9 +92,8 @@ has signature_input => (
     isa     => InstanceOf ['Hash::MultiValue'],
     builder => sub($self) {
         my $input = $self->headers->header("signature-input");
-
         # TODO: use a proper HTTP Structured Field (RFC 9651) parser
-        return Hash::MultiValue->new( map { split /(*nlb:=)=(*nla:=)/ } split /[;]s*/, $input );
+        return Hash::MultiValue->new( map { _structured_split( '=', $_) } _structured_split( ';', $input ) );
     }
 );
 
@@ -103,7 +104,7 @@ has signature_header => (
         my $input = $self->headers->header("signature");
 
         # TODO: use a proper HTTP Structured Field (RFC 9651) parser
-        return Hash::MultiValue->new( map { split /(*nlb:=)=(*nla:=)/ } split /[,]s*/, $input );
+        return Hash::MultiValue->new( map { _structured_split( '=', $_)  } _structured_split( ',', $input ) );
     },
     handles => {
         signature_tags => 'keys',
@@ -237,6 +238,78 @@ sub _get_derived_field( $self, $field ) {
 
     return ( maybe $qfield => $handlers{$key}->( $self->message, $param ) );
 }
+
+use constant DQUOTE => "\"";
+use constant ESCAPE => "\\";
+use constant INNER_START => '(';
+use constant INNER_END   => ')';
+
+sub _structured_split( $on, $input ) {
+
+    my @res;
+    my @ctx;
+
+    my $i = 0;
+
+    while ($i < length($input)) {
+
+        my $char = substr($input, $i, 1);
+        match( $char : equ ) {
+
+            case ( ESCAPE ) {
+                my $next = substr( $input, $i + 1, 1 );
+                unless ( $next eq ESCAPE || $next eq DQUOTE ) {
+                    $i += 2;
+                    next;
+                }
+                croak "invalid character after backslash";
+            }
+
+            case (INNER_START) {
+                unless ( $ctx[-1] equ DQUOTE ) {
+                    push @ctx, INNER_END;
+                }
+            }
+
+            case (DQUOTE) {
+                if ( $ctx[-1] equ DQUOTE ) {
+                    pop @ctx;
+                }
+                else {
+                    push @ctx, DQUOTE;
+                }
+            }
+
+            case(INNER_END) {
+
+                if ( $ctx[-1] equ INNER_END ) {
+                    pop @ctx;
+                }
+                elsif (! ( $ctx[-1] equ DQUOTE ) ) {
+                    croak "unbalanced bracket";
+                }
+            }
+
+            case($on) {
+
+                unless ($ctx[-1]) {
+                    push @res, trim( substr($input, 0, $i ) );
+                    $input = substr($input, $i+1);
+                    $i = 0;
+                    next;
+                }
+            }
+
+        }
+
+        $i++;
+    }
+
+    push @res, trim($input) unless $input equ "";
+
+    return @res;
+}
+
 
 sub BUILDARGS( $class, @args ) {
 
