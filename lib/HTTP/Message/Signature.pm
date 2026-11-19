@@ -36,9 +36,9 @@ use namespace::autoclean;
             require_tag => 'web-bot-auth',
         );
 
-        $sig->verify or die "bad signature";
-
         $sig->is_expired and die "expired signature";
+
+        $sig->verify or die "bad signature";
 
     }
     catch ($e) {
