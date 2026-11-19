@@ -120,7 +120,8 @@ has public_keys_json => (
 
         my $uri = $self->signature_agent_uri;
         croak "agent_uri should be an https URL" unless $uri->scheme eq "https";
-        my $res = $self->user_agent->get("$uri");
+        my $res =
+          $self->user_agent->get( "$uri", { headers => { 'Accept' => join(",", keys %types) } } );
         if ( $res->{success} && $types{ $res->{headers}{'content-type'} } ) {
             return $res->{content};
         }
