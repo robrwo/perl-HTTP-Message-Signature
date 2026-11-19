@@ -137,7 +137,7 @@ has public_keys_json => (
             return $res->{content};
         }
 
-        croak "error retriving ${uri}";
+        croak "error retrieving ${uri}";
     }
 );
 
