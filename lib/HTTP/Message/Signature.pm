@@ -1,10 +1,9 @@
-## Please see file perltidy.ERR
 package HTTP::Message::Signature;
 
 use v5.24;
 use Moo;
 
-use Carp        qw( carp croak );
+use Carp qw( carp croak );
 use Crypt::PK::Ed25519;
 use Hash::MultiValue;
 use HTTP::Message;
@@ -68,7 +67,7 @@ Note that you can pass a L<PSGI> environment hash reference to the constructor.
 
 has message => (
     is       => 'ro',
-    isa      => InstanceOf [ qw/ HTTP::Message Plack::Request / ],
+    isa      => InstanceOf [qw/ HTTP::Message Plack::Request /],
     required => 1,
     handles  => [qw/ as_string headers /],
 );
@@ -155,7 +154,7 @@ has public_keys_json => (
         my $uri = $self->signature_agent_uri;
         croak "agent_uri should be an https URL" unless $uri->scheme eq "https";
         my $res =
-          $self->user_agent->get( "$uri", { headers => { 'Accept' => join(",", keys %types) } } );
+          $self->user_agent->get( "$uri", { headers => { 'Accept' => join( ",", keys %types ) } } );
         if ( $res->{success} && $types{ $res->{headers}{'content-type'} } ) {
             return $res->{content};
         }
@@ -165,8 +164,8 @@ has public_keys_json => (
 );
 
 has public_keys => (
-    is  => 'lazy',
-    isa => HashRef, # TODO make strict validation optional
+    is      => 'lazy',
+    isa     => HashRef,       # TODO make strict validation optional
     builder => sub($self) {
         return decode_json( $self->public_keys_json );
     },
@@ -191,7 +190,7 @@ sub is_expired($self) {
     return time > $expires;
 }
 
-sub verify($self, $label = undef) {
+sub verify( $self, $label = undef ) {
 
     if ( $self->has_require_tag ) {
         my $tag = $self->require_tag;
@@ -199,7 +198,7 @@ sub verify($self, $label = undef) {
     }
 
     my $kid = unquote( $self->signature_input->{keyid} )
-        or croak "not keyid was found in the signature-input";
+      or croak "not keyid was found in the signature-input";
 
     # TODO: add support for looking up keys from a cache based on agent URL and key id.
 
@@ -235,7 +234,7 @@ sub _generate_signature_base( $self, $label ) {
         push @buffer, $line;
     }
 
-    my $input  = $self->signature_input->{$label} or croak "signature-input label ${label} was not found";
+    my $input = $self->signature_input->{$label} or croak "signature-input label ${label} was not found";
 
     my @fields = split / /, unquote( $input, braces => 1 );
 
@@ -247,14 +246,14 @@ sub _generate_signature_base( $self, $label ) {
 
             my $value;
 
-            my ($key, $param) = _structured_split( ';', $field );
+            my ( $key, $param ) = _structured_split( ';', $field );
 
             my $ufield = unquote( $param ? $key : $field );
 
             my $header = $self->headers->header($ufield);
 
             if ($param) {
-                my ($name, $key) = _structured_split( '=', $param );
+                my ( $name, $key ) = _structured_split( '=', $param );
                 my $hash = $self->_parse_dict( ";", $header );
                 $value = $hash->{ unquote($key) };
                 _process_header_field( $field => $value );
@@ -303,7 +302,7 @@ sub _get_derived_field( $self, $field ) {
         },
     );
 
-    my ( $key, $param, @extra ) =  _structured_split( ';', $field );
+    my ( $key, $param, @extra ) = _structured_split( ';', $field );
 
     croak "extra parameters in field ${field}" if @extra;
 
@@ -323,8 +322,8 @@ sub _parse_dict( $self, $on, $input ) {
     return Hash::MultiValue->new( map { _structured_split( '=', $_ ) } _structured_split( $on, $input ) );
 }
 
-use constant DQUOTE => "\"";
-use constant ESCAPE => "\\";
+use constant DQUOTE      => "\"";
+use constant ESCAPE      => "\\";
 use constant INNER_START => '(';
 use constant INNER_END   => ')';
 
@@ -335,12 +334,12 @@ sub _structured_split( $on, $input ) {
 
     my $i = 0;
 
-    while ($i < length($input)) {
+    while ( $i < length($input) ) {
 
-        my $char = substr($input, $i, 1);
+        my $char = substr( $input, $i, 1 );
         match( $char : equ ) {
 
-            case ( ESCAPE ) {
+            case (ESCAPE) {
                 my $next = substr( $input, $i + 1, 1 );
                 unless ( $next equ ESCAPE || $next equ DQUOTE ) {
                     $i += 2;
@@ -364,22 +363,22 @@ sub _structured_split( $on, $input ) {
                 }
             }
 
-            case(INNER_END) {
+            case (INNER_END) {
 
                 if ( $ctx[-1] equ INNER_END ) {
                     pop @ctx;
                 }
-                elsif (! ( $ctx[-1] equ DQUOTE ) ) {
+                elsif ( !( $ctx[-1] equ DQUOTE ) ) {
                     croak "unbalanced bracket";
                 }
             }
 
-            case($on) {
+            case ($on) {
 
-                unless ($ctx[-1]) {
-                    push @res, trim( substr($input, 0, $i ) );
-                    $input = substr($input, $i+1);
-                    $i = 0;
+                unless ( $ctx[-1] ) {
+                    push @res, trim( substr( $input, 0, $i ) );
+                    $input = substr( $input, $i + 1 );
+                    $i     = 0;
                     next;
                 }
             }
@@ -394,13 +393,12 @@ sub _structured_split( $on, $input ) {
     return @res;
 }
 
-
 sub BUILDARGS( $class, @args ) {
 
-    my %args = @args == 1 && is_plain_hashref($args[0]) ? $args[0]->%* : @args;
+    my %args = @args == 1 && is_plain_hashref( $args[0] ) ? $args[0]->%* : @args;
 
     my $message = $args{message};
-    if (is_plain_hashref($message)) {
+    if ( is_plain_hashref($message) ) {
         require Plack::Request;
         $args{message} = Plack::Request->new($message);
 
