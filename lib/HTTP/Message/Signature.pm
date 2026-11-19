@@ -152,7 +152,7 @@ has signature_agent => (
 
 =attr signature_agent_uri
 
-This is the URI for the L</signature_agent> JWT key.
+This is the URI for the L</signature_agent> JSON Web Key (JWK).
 
 =cut
 
@@ -254,7 +254,11 @@ has public_keys => (
 
 When set, the L</verify> method requires the tag in the L</signature_input> header to be that value.
 
-Set this to "web-bot-auth" to verify bots.
+Set this to C<web-bot-auth> to verify bots.
+
+=attr has_require_tag
+
+A predicate for L</require_tag>.
 
 =cut
 
@@ -421,6 +425,16 @@ sub _parse_dict( $self, $on, $input ) {
     return Hash::MultiValue->new( map { _structured_split( '=', $_ ) } _structured_split( $on, $input ) );
 }
 
+=for Pod::Coverage DQUOTE
+
+=for Pod::Coverage ESCAPE
+
+=for Pod::Coverage INNER_END
+
+=for Pod::Coverage INNER_START
+
+=cut
+
 use constant DQUOTE      => "\"";
 use constant ESCAPE      => "\\";
 use constant INNER_START => '(';
@@ -492,7 +506,12 @@ sub _structured_split( $on, $input ) {
     return @res;
 }
 
-sub BUILDARGS( $class, @args ) {
+
+=for Pod::Coverage BUILDARGS
+
+=cut
+
+sub BUILDARGS( $, @args ) {
 
     my %args = @args == 1 && is_plain_hashref( $args[0] ) ? $args[0]->%* : @args;
 
