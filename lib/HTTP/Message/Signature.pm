@@ -6,7 +6,6 @@ use Moo;
 
 use Carp        qw( carp croak );
 use Crypt::PK::Ed25519;
-use Crypt::PRNG qw(random_bytes_b64u);
 use Hash::MultiValue;
 use HTTP::Message;
 use HTTP::Tiny;
