@@ -101,7 +101,7 @@ has signature_agent => (
     is      => 'lazy',
     isa     => NonEmptyStr,
     builder => sub($self) {
-        my $agent = $self->headers->header("signature-agent");
+        my $agent = join(",", $self->headers->header("signature-agent") );
         if ( $agent =~ /\A \w+ = /ax ) {
             my ($key) = $self->headers->header("signature-agent-key") || $self->signature_labels;
             my $agents = $self->_parse_dict( ',', $agent );
@@ -127,8 +127,8 @@ has signature_input => (
     is      => 'lazy',
     isa     => InstanceOf ['Hash::MultiValue'],
     builder => sub($self) {
-        my $input = $self->headers->header("signature-input");
-        return $self->_parse_dict( ';', $input );
+        my @input = $self->headers->header("signature-input");
+        return $self->_parse_dict( ';', join( ';', @input ) );
     },
     handles => {
         signature_labels => 'keys',
@@ -139,8 +139,8 @@ has signature_header => (
     is      => 'lazy',
     isa     => InstanceOf ['Hash::MultiValue'],
     builder => sub($self) {
-        my $input = $self->headers->header("signature");
-        return $self->_parse_dict( ',', $input );
+        my @input = $self->headers->header("signature");
+        return $self->_parse_dict( ',', join( ',', @input ) );
     },
 );
 
