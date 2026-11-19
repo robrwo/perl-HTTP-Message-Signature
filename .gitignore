@@ -1,2 +1,5 @@
+.build/
 backup/
 perltidy.ERR
+HTTP-Message-Signature-*/
+HTTP-Message-Signature-*.tar.gz
