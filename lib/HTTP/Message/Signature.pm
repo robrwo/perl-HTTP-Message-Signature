@@ -79,13 +79,14 @@ has is_request => (
         my $message = $self->message;
         return $message->isa("HTTP::Request") || $message->isa("Plack::Request");
     },
+    init_arg => undef,
 );
 
 has is_response => (
     is      => 'lazy',
     isa     => Bool,
     builder => sub($self) { $self->message->isa("HTTP::Response") },
-
+    init_arg => undef,
 );
 
 has user_agent => (
