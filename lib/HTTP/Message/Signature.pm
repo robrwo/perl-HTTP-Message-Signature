@@ -23,7 +23,7 @@ use Types::Common qw( Bool HashRef InstanceOf NonEmptyStr  );
 use Types::URI    qw( Uri );
 use URI;
 
-use experimental qw( signatures );
+use experimental qw( lexical_subs signatures );
 
 use namespace::autoclean;
 
