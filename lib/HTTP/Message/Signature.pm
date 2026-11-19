@@ -181,6 +181,7 @@ has signature_input => (
     is      => 'lazy',
     isa     => InstanceOf ['Hash::MultiValue'],
     builder => sub($self) {
+        # TODO: these should be separated by commas, with parameters separated by semicolons
         my @input = $self->headers->header("signature-input");
         return $self->_parse_dict( ';', join( ';', @input ) );
     },
