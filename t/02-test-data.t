@@ -1,12 +1,17 @@
+use v5.24;
+
 use Test2::V0 -no_srand;
 use Test2::Tools::Exception qw( lives );
 
+use Data::Dumper;
 use JSON::MaybeXS qw( decode_json );
 use HTTP::Request;
 use HTTP::Message::Signature;
 use Path::Tiny   qw( path );
 use PerlX::Maybe qw( maybe );
 use String::Util qw( unquote );
+
+use experimental qw( signatures );
 
 # SPDX-FileCopyrightUrl: https://github.com/cloudflare/web-bot-auth/tree/main
 # SPDX-License-Identifier: Apache-2.0
@@ -45,7 +50,8 @@ for my $case ( $data->@* ) {
         my $scope;
         $scope = todo "signature-agent-key is unsupported" if $case->{signature_agent_key};
         ok lives {
-            ok $sig->verify, "verify";
+            ok $sig->verify, "verify"
+                or note( explain($case) );
         }, 'verify lives';
 
     };
@@ -53,3 +59,7 @@ for my $case ( $data->@* ) {
 }
 
 done_testing;
+
+sub explain($data) {
+    return Data::Dumper->new([$data])->Terse(1)->Dump;
+}
