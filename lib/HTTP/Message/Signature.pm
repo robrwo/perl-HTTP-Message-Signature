@@ -138,8 +138,26 @@ has public_keys => (
     },
 );
 
+=attr require_tag
+
+When set, the L</verify> method requires the tag in the L</signature_input> header to be that value.
+
+Set this to "web-bot-auth" to verify bots.
+
+=cut
+
+has require_tag => (
+    is        => 'ro',
+    isa       => NonEmptyStr,
+    predicate => 1,
+);
 
 sub verify($self, $tag = undef) {
+
+    if ( $self->has_require_tag ) {
+        my $tag = $self->require_tag;
+        croak "tag is not '${tag}'" unless unquote( $self->signature_input->{tag} ) equ $tag;
+    }
 
     my $kid = unquote( $self->signature_input->{keyid} )
         or croak "not keyid was found in the signature-input";

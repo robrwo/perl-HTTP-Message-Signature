@@ -36,6 +36,7 @@ for my $case ( $data->@* ) {
         ok my $sig = HTTP::Message::Signature->new(
             message => $req,
             public_keys => { keys => [ $key ] },
+            require_tag => 'web-bot-auth',
         );
 
         # Change this to the actual keyid
