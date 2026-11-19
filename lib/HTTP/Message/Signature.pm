@@ -428,6 +428,16 @@ rather than using an HTTP Structured Field (RFC 9651) parser.
 
 Your application should use an allowed list of trusted agents, rather than attempt to verify arbitrary requests.
 
+=head1 SEE ALSO
+
+L<HTTP Message Signatures for automated traffic|https://github.com/webbotauth/draft-ietf-webbotauth-httpsig-protocol/>
+
+L<RFC 7517: JSON Web Key (JWK)|https://www.rfc-editor.org/info/rfc7517>
+
+L<RFC 9421: HTTP Message Signatures|https://www.rfc-editor.org/info/rfc9421>
+
+L<RFC 9651: Structured Field Values for HTTP|https://www.rfc-editor.org/info/rfc9651>
+
 =cut
 
 1;
