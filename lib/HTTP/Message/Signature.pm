@@ -117,6 +117,7 @@ has signature_agent_uri => (
     coerce  => 1,
     builder => sub($self) {
         my $uri = URI->new( unquote( $self->signature_agent ) );
+        carp "signature-agent header contains a full URL" if $uri->path && $uri->path ne "/";
         $uri->path("/.well-known/http-message-signatures-directory");
         return $uri;
     },
