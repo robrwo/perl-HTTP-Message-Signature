@@ -40,6 +40,8 @@ use namespace::autoclean;
 
         $sig->verify or die "bad signature";
 
+        $sig->is_expired and die "expired signature";
+
     }
     catch ($e) {
 
@@ -184,6 +186,11 @@ has require_tag => (
     isa       => NonEmptyStr,
     predicate => 1,
 );
+
+sub is_expired($self) {
+    my $expires = $self->signature_input->{expires} or return undef;
+    return time > $expires;
+}
 
 sub verify($self, $label = undef) {
 

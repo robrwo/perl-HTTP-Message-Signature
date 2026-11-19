@@ -50,6 +50,7 @@ for my $case ( $data->@* ) {
         ok lives {
             ok $sig->verify, "verify"
                 or note( explain($case) );
+            ok !$sig->is_expired, "not expired";
         }, 'verify lives';
 
     };
