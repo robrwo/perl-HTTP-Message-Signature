@@ -27,6 +27,26 @@ use experimental qw( signatures );
 
 use namespace::autoclean;
 
+=head1 SYNOPSIS
+
+    use HTTP::Message::Signature;
+
+    try {
+
+        my $sig = HTTP::Message::Signature->new(
+            message     => $request,         # HTTP::Request, Plack::Request or PSGI env hash
+            require_tag => 'web-bot-auth',
+        );
+
+        $sig->verify or die "bad signature";
+
+    }
+    catch ($e) {
+
+        ...
+
+    }
+
 =head1 STATUS
 
 This module is an experimental prototype.
