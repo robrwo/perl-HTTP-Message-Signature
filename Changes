@@ -1,6 +1,9 @@
 Revision history for {{ $dist->name }}:
 
 {{$NEXT}}
+  [Bug Fixes]
+  - Removed use of "equ" operator and state hash variables that caused problems with older Perl versions.
+
   [Documentation]
   - Fixed broken Changes file.
 
