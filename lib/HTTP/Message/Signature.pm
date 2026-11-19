@@ -562,6 +562,26 @@ L<RFC 9421: HTTP Message Signatures|https://www.rfc-editor.org/info/rfc9421>
 
 L<RFC 9651: Structured Field Values for HTTP|https://www.rfc-editor.org/info/rfc9651>
 
+=head1 prepend:SUPPORT
+
+Only the latest release of this module will be supported.
+
+This module requires Perl v5.24 or later.
+Future releases may only support Perl versions released in the last ten (10) years.
+
+=head2 Reporting Bugs and Submitting Feature Requests
+
+=head1 append:SUPPORT
+
+If the bug you are reporting has security implications which make it inappropriate to send to a public issue tracker,
+then see F<SECURITY.md> for instructions how to report security vulnerabilities.
+
+=begin :prelude
+
+=for stopwords Auth JWK
+
+=end :prelude
+
 =cut
 
 1;
