@@ -18,7 +18,6 @@ use PerlX::Maybe  qw( maybe );
 use Ref::Util     qw( is_plain_hashref );
 use String::Util  qw( trim unquote );
 use Syntax::Keyword::Match;
-use Syntax::Operator::Equ;
 use Types::Common qw( Bool HashRef InstanceOf NonEmptyStr  );
 use Types::URI    qw( Uri );
 use URI;
@@ -450,7 +449,7 @@ sub _structured_split( $on, $input ) {
     while ( $i < length($input) ) {
 
         my $char = substr( $input, $i, 1 );
-        match( $char : equ ) {
+        match( $char : eq ) {
 
             case (ESCAPE) {
                 my $next = substr( $input, $i + 1, 1 ) // '';

@@ -16,7 +16,6 @@ requires "Plack::Request" => "0";
 requires "Ref::Util" => "0";
 requires "String::Util" => "0";
 requires "Syntax::Keyword::Match" => "0";
-requires "Syntax::Operator::Equ" => "0";
 requires "Types::Common" => "0";
 requires "Types::URI" => "0";
 requires "URI" => "0";

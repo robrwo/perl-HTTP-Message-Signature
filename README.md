@@ -69,7 +69,6 @@ This module lists the following modules as runtime dependencies:
 - [Ref::Util](https://metacpan.org/pod/Ref%3A%3AUtil)
 - [String::Util](https://metacpan.org/pod/String%3A%3AUtil)
 - [Syntax::Keyword::Match](https://metacpan.org/pod/Syntax%3A%3AKeyword%3A%3AMatch)
-- [Syntax::Operator::Equ](https://metacpan.org/pod/Syntax%3A%3AOperator%3A%3AEqu)
 - [Types::Common](https://metacpan.org/pod/Types%3A%3ACommon)
 - [Types::URI](https://metacpan.org/pod/Types%3A%3AURI)
 - [URI](https://metacpan.org/pod/URI)
