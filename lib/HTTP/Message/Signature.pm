@@ -76,12 +76,26 @@ has user_agent => (
     },
 );
 
+has signature_agent => (
+    is      => 'lazy',
+    isa     => NonEmptyStr,
+    builder => sub($self) {
+        my $agent = $self->headers->header("signature-agent");
+        if ( $agent =~ /\A \w+ = /ax ) {
+            my ($key) = $self->headers->header("signature-agent-key") || $self->signature_labels;
+            my $agents = Hash::MultiValue->new( map { _structured_split( '=', $_ ) } _structured_split( ',', $agent ) );
+            $agent = $agents->{ unquote($key) };
+        }
+        return $agent;
+    }
+);
+
 has signature_agent_uri => (
     is      => 'lazy',
     isa     => Uri,
     coerce  => 1,
     builder => sub($self) {
-        my $uri = URI->new( unquote( $self->headers->header("signature-agent") ) );
+        my $uri = URI->new( unquote( $self->signature_agent ) );
         $uri->path("/.well-known/http-message-signatures-directory");
         return $uri;
     },
@@ -199,14 +213,33 @@ sub _generate_signature_base( $self, $label ) {
 
     my $input  = $self->signature_input->{$label} or croak "signature-input label ${label} was not found";
 
-    my @fields = map { unquote($_) } split / /, unquote( $input, braces => 1 );
+    my @fields = split / /, unquote( $input, braces => 1 );
 
     for my $field (@fields) {
-        if ( substr( $field, 0, 1 ) eq '@' ) {
+        if ( $field =~ /\A \"? \@/ax ) {
             _process_header_field( $self->_get_derived_field($field) );
         }
         else {
-            _process_header_field( "\"${field}\"" => $self->headers->header($field) );
+
+            my $value;
+
+            my ($key, $param) = _structured_split( ';', $field );
+
+            my $ufield = unquote( $param ? $key : $field );
+
+            my $header = $self->headers->header($ufield);
+
+            if ($param) {
+                my ($name, $key) = _structured_split( '=', $param );
+                my $hash = $self->_parse_dict( ";", $header );
+                $value = $hash->{ unquote($key) };
+                _process_header_field( $field => $value );
+            }
+            else {
+                $value = $header;
+                _process_header_field( "\"${field}\"" => $value );
+            }
+
         }
     }
 
@@ -245,7 +278,7 @@ sub _get_derived_field( $self, $field ) {
         },
     );
 
-    my ( $key, $param, @extra ) = split /;/, $field;
+    my ( $key, $param, @extra ) =  _structured_split( ';', $field );
 
     croak "extra parameters in field ${field}" if @extra;
 
@@ -259,6 +292,10 @@ sub _get_derived_field( $self, $field ) {
     $qfield .= ";${param}" if defined $param;
 
     return ( maybe $qfield => $handlers{$key}->( $self->message, $param ) );
+}
+
+sub _parse_dict( $self, $on, $input ) {
+    return Hash::MultiValue->new( map { _structured_split( '=', $_ ) } _structured_split( $on, $input ) );
 }
 
 use constant DQUOTE => "\"";

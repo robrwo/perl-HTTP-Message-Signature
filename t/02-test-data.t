@@ -33,7 +33,7 @@ for my $case ( $data->@* ) {
             [
                 "signature"           => $case->{signature},
                 "signature-input"     => $case->{signature_input},
-                "signature-agent"     => $case->{signature_agent},
+                maybe "signature-agent"     => $case->{signature_agent},
                 maybe "signature-agent-key" => $case->{signature_agent_key},
             ]
         );
@@ -47,8 +47,6 @@ for my $case ( $data->@* ) {
         # Change this to the actual keyid
         $key->{kid} = unquote( $sig->signature_input->{keyid} );
 
-        my $scope;
-        $scope = todo "signature-agent-key is unsupported" if $case->{signature_agent_key};
         ok lives {
             ok $sig->verify, "verify"
                 or note( explain($case) );

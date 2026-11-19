@@ -22,4 +22,7 @@ is [ ssplit( ';', "sig2=(\"\@authority\" \"signature-agent\";key=\"agent2\");cre
     'tag="web-bot-auth"',
     ];
 
+is [ ssplit( ';', '"signature-agent";key="agent1"') ], [ '"signature-agent"', 'key="agent1"' ];
+
+
 done_testing;
