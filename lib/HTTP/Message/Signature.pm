@@ -424,6 +424,10 @@ The current version of this module does not support multiple signatures.
 The current version of this module uses regular expressions for splitting dictionary and parameter fields,
 rather than using an HTTP Structured Field (RFC 9651) parser.
 
+=head2 Trusted Agents
+
+Your application should use an allowed list of trusted agents, rather than attempt to verify arbitrary requests.
+
 =cut
 
 1;
