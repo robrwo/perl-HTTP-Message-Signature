@@ -233,6 +233,7 @@ sub _generate_signature_base( $self, $label ) {
             }
             else {
                 $value = $header;
+                $field = unquote($field);
                 _process_header_field( "\"${field}\"" => $value );
             }
 
