@@ -3,3 +3,4 @@ backup/
 perltidy.ERR
 HTTP-Message-Signature-*/
 HTTP-Message-Signature-*.tar.gz
+HTTP-Message-Signature-*.sigstore.json
