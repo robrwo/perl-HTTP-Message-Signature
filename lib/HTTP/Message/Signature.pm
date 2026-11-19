@@ -421,6 +421,10 @@ sub _get_derived_field( $self, $field ) {
     return ( maybe $qfield => $handlers->{$key}->( $self->message, $param ) );
 }
 
+# TODO: this is wrong, as we don't want a multi-valud hash. The RFC
+# says that in the case of duplicate dictionary or parameters keys,
+# the last one is used.
+
 sub _parse_dict( $self, $on, $input ) {
     return Hash::MultiValue->new( map { _structured_split( '=', $_ ) } _structured_split( $on, $input ) );
 }
