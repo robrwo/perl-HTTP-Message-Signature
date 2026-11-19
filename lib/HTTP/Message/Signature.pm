@@ -539,6 +539,11 @@ The current version does not support caching keys.
 
 The current version of this module does not support multiple signatures.
 
+=head2 Content Digests
+
+The L</verify> method only checks the signature.
+If the signature includes a C<Content-Digest> header, then the digest of the message body will need to be validated separetely.
+
 =head1 SECURITY CONSIDERATIONS
 
 =head2 Structured Fields

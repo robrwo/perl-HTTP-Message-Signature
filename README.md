@@ -38,6 +38,15 @@ catch ($e) {
 
 This module supports verifying HTTP Message Signatures (RFC 9421), notably those used for Web Bot Authentication.
 
+# RECENT CHANGES
+
+Changes for version v0.0.3 (2026-11-19)
+
+- Documentation
+    - Added a section to KNOWN ISSUES about Content-Digests.
+
+See the `Changes` file for more details.
+
 # REQUIREMENTS
 
 This module lists the following modules as runtime dependencies:
