@@ -394,7 +394,9 @@ sub _get_derived_field( $self, $field ) {
             if ( my ($name) = $param =~ /\A name = " ((?:\w+-)*\w+) " \z/ax ) {
 
                 # Note: RFC 9421 Sec 2.2.8 says named parameters with multiple values must not be included
-                return $message->uri_canonical->query_param($name);
+                my @values = $message->uri->query_param($name);
+                croak "multipe query-param values for '${name}'" if @values > 1;
+                return $values[0];
             }
         },
     );
