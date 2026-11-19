@@ -4,6 +4,8 @@ Revision history for {{ $dist->name }}:
   [Bug Fixes]
   - Removed use of "equ" operator and state hash variables that caused problems with older Perl versions.
 
+  - Specify minimum version of List::Util.
+
   [Documentation]
   - Fixed broken Changes file.
 

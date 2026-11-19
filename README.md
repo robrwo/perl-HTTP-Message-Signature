@@ -44,6 +44,7 @@ Changes for version v0.0.2 (2026-11-19)
 
 - Bug Fixes
     - Removed use of "equ" operator and state hash variables that caused problems with older Perl versions.
+    - Specify minimum version of List::Util.
 - Documentation
     - Fixed broken Changes file.
     - Move STATUS section to the top.
@@ -61,7 +62,7 @@ This module lists the following modules as runtime dependencies:
 - [Hash::MultiValue](https://metacpan.org/pod/Hash%3A%3AMultiValue)
 - [Hash::Ordered](https://metacpan.org/pod/Hash%3A%3AOrdered)
 - [JSON::MaybeXS](https://metacpan.org/pod/JSON%3A%3AMaybeXS)
-- [List::Util](https://metacpan.org/pod/List%3A%3AUtil)
+- [List::Util](https://metacpan.org/pod/List%3A%3AUtil) version 1.29 or later
 - [MIME::Base64](https://metacpan.org/pod/MIME%3A%3ABase64)
 - [Moo](https://metacpan.org/pod/Moo)
 - [PerlX::Maybe](https://metacpan.org/pod/PerlX%3A%3AMaybe)

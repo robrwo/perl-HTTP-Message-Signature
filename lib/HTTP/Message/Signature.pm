@@ -12,7 +12,7 @@ use HTTP::Message;
 use HTTP::Tiny;
 use Hash::Ordered;
 use JSON::MaybeXS qw( decode_json );
-use List::Util    qw( first pairmap );
+use List::Util    1.29 qw( first pairmap );
 use MIME::Base64  qw( decode_base64 );
 use PerlX::Maybe  qw( maybe );
 use Ref::Util     qw( is_plain_hashref );
