@@ -92,9 +92,13 @@ has signature_input => (
     isa     => InstanceOf ['Hash::MultiValue'],
     builder => sub($self) {
         my $input = $self->headers->header("signature-input");
+        # FIXME use parse_dict
         # TODO: use a proper HTTP Structured Field (RFC 9651) parser
         return Hash::MultiValue->new( map { _structured_split( '=', $_) } _structured_split( ';', $input ) );
-    }
+    },
+    handles => {
+        signature_labels => 'keys',
+    },
 );
 
 has signature_header => (
@@ -105,9 +109,6 @@ has signature_header => (
 
         # TODO: use a proper HTTP Structured Field (RFC 9651) parser
         return Hash::MultiValue->new( map { _structured_split( '=', $_)  } _structured_split( ',', $input ) );
-    },
-    handles => {
-        signature_tags => 'keys',
     },
 );
 
@@ -152,7 +153,7 @@ has require_tag => (
     predicate => 1,
 );
 
-sub verify($self, $tag = undef) {
+sub verify($self, $label = undef) {
 
     if ( $self->has_require_tag ) {
         my $tag = $self->require_tag;
@@ -172,15 +173,15 @@ sub verify($self, $tag = undef) {
     my $pk = Crypt::PK::Ed25519->new();
     $pk->import_key($key);
 
-    ($tag) = sort $self->signature_tags unless defined $tag;
-    my $sig = decode_base64( $self->signature_header->{$tag} );
+    ($label) = $self->signature_labels unless defined $label;
+    my $sig = decode_base64( $self->signature_header->{$label} );
 
-    my $base = $self->_generate_signature_base($tag);
+    my $base = $self->_generate_signature_base($label);
 
     return $pk->verify_message( $sig, $base );
 }
 
-sub _generate_signature_base( $self, $tag ) {
+sub _generate_signature_base( $self, $label ) {
 
     my @buffer;
 
@@ -196,7 +197,7 @@ sub _generate_signature_base( $self, $tag ) {
         push @buffer, $line;
     }
 
-    my $input  = $self->signature_input->{$tag} or croak "signature-input tag ${tag} was not found";
+    my $input  = $self->signature_input->{$label} or croak "signature-input label ${label} was not found";
 
     my @fields = map { unquote($_) } split / /, unquote( $input, braces => 1 );
 
@@ -210,8 +211,8 @@ sub _generate_signature_base( $self, $tag ) {
     }
 
     my $header = $self->headers->header("signature-input");
-    croak "unexpected signature-input" unless substr( $header, 0, length($tag) + 1 ) eq "${tag}=";
-    my $params = substr( $header, length($tag) + 1 );
+    croak "unexpected signature-input" unless substr( $header, 0, length($label) + 1 ) eq "${label}=";
+    my $params = substr( $header, length($label) + 1 );
     _process_header_field( '"@signature-params"' => $params );
 
     return join( "\n", @buffer );
