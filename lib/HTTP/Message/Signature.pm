@@ -173,7 +173,7 @@ sub verify($self, $label = undef) {
     my $kid = unquote( $self->signature_input->{keyid} )
         or croak "not keyid was found in the signature-input";
 
-    # TODO: add support for looking up keys from a cache based on key id.
+    # TODO: add support for looking up keys from a cache based on agent URL and key id.
 
     my $key = first { $_->{kid} equ $kid } $self->public_keys->{keys}->@*
       or croak "keyid '${kid}' was not found in the public keys";
