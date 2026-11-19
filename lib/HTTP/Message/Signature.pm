@@ -127,6 +127,8 @@ has public_keys_json => (
     isa     => NonEmptyStr,
     builder => sub($self) {
 
+        # TODO: add support for caching keys by URL
+
         state %types = map { $_ => 1 } qw[ application/http-message-signatures-directory+json application/json ];
 
         my $uri = $self->signature_agent_uri;
