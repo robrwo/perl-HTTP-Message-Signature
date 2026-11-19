@@ -383,6 +383,10 @@ sub BUILDARGS( $class, @args ) {
 
 =head1 KNOWN ISSUES
 
+=head2 Signature Algorithms
+
+The current version only supports the "Ed25519" algorithm.
+
 =head2 Missing Signature-Agent headers
 
 The current version does not support caching keys.
