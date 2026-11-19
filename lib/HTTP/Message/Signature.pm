@@ -295,7 +295,7 @@ sub verify( $self, $label = undef ) {
 
     if ( $self->has_require_tag ) {
         my $tag = $self->require_tag;
-        croak "tag is not '${tag}'" unless unquote( $self->signature_input->{tag} ) equ $tag;
+        croak "tag is not '${tag}'" unless unquote( $self->signature_input->{tag} ) eq $tag;
     }
 
     my $kid = unquote( $self->signature_input->{keyid} )
@@ -303,10 +303,10 @@ sub verify( $self, $label = undef ) {
 
     # TODO: add support for looking up keys from a cache based on agent URL and key id.
 
-    my $key = first { $_->{kid} equ $kid } $self->public_keys->{keys}->@*
+    my $key = first { $_->{kid} eq $kid } $self->public_keys->{keys}->@*
       or croak "keyid '${kid}' was not found in the public keys";
 
-    croak "unsupposed algorithm" unless $key->{crv} equ "Ed25519";
+    croak "unsupposed algorithm" unless $key->{crv} eq "Ed25519";
 
     my $pk = Crypt::PK::Ed25519->new();
     $pk->import_key($key);
@@ -453,8 +453,8 @@ sub _structured_split( $on, $input ) {
         match( $char : equ ) {
 
             case (ESCAPE) {
-                my $next = substr( $input, $i + 1, 1 );
-                unless ( $next equ ESCAPE || $next equ DQUOTE ) {
+                my $next = substr( $input, $i + 1, 1 ) // '';
+                unless ( $next eq ESCAPE || $next eq DQUOTE ) {
                     $i += 2;
                     next;
                 }
@@ -462,13 +462,13 @@ sub _structured_split( $on, $input ) {
             }
 
             case (INNER_START) {
-                unless ( $ctx[-1] equ DQUOTE ) {
+                unless ( $ctx[-1] && $ctx[-1] eq DQUOTE ) {
                     push @ctx, INNER_END;
                 }
             }
 
             case (DQUOTE) {
-                if ( $ctx[-1] equ DQUOTE ) {
+                if ( $ctx[-1] && $ctx[-1] eq DQUOTE ) {
                     pop @ctx;
                 }
                 else {
@@ -478,10 +478,10 @@ sub _structured_split( $on, $input ) {
 
             case (INNER_END) {
 
-                if ( $ctx[-1] equ INNER_END ) {
+                if ( $ctx[-1] &&  $ctx[-1] eq INNER_END ) {
                     pop @ctx;
                 }
-                elsif ( !( $ctx[-1] equ DQUOTE ) ) {
+                elsif ( !( $ctx[-1] && $ctx[-1] eq DQUOTE ) ) {
                     croak "unbalanced bracket";
                 }
             }
@@ -501,7 +501,7 @@ sub _structured_split( $on, $input ) {
         $i++;
     }
 
-    push @res, trim($input) unless $input equ "";
+    push @res, trim($input) unless $input eq "";
 
     return @res;
 }
