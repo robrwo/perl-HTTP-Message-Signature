@@ -222,13 +222,13 @@ has public_keys_json => (
 
         # TODO: add support for caching keys by URL
 
-        state %types = map { $_ => 1 } qw[ application/http-message-signatures-directory+json application/json ];
+        state $types = { map { $_ => 1 } qw[ application/http-message-signatures-directory+json application/json ] };
 
         my $uri = $self->signature_agent_uri;
         croak "agent_uri should be an https URL" unless $uri->scheme eq "https";
         my $res =
-          $self->user_agent->get( "$uri", { headers => { 'Accept' => join( ",", keys %types ) } } );
-        if ( $res->{success} && $types{ $res->{headers}{'content-type'} } ) {
+          $self->user_agent->get( "$uri", { headers => { 'Accept' => join( ",", keys $types->%* ) } } );
+        if ( $res->{success} && $types->{ $res->{headers}{'content-type'} } ) {
             return $res->{content};
         }
 
@@ -380,7 +380,7 @@ sub _get_derived_field( $self, $field ) {
 
     # Note: HTTP::Message has uri_canonical but Plack::Request does not.
 
-    state %handlers = (
+    state $handlers = {
         '@status'     => sub( $message, $ ) { $message->code },
         '@method'     => sub( $message, $ ) { $message->method },
         '@target-uri' => sub( $message, $ ) { $message->uri },
@@ -403,7 +403,7 @@ sub _get_derived_field( $self, $field ) {
                 return $values[0];
             }
         },
-    );
+    };
 
     my ( $key, $param, @extra ) = _structured_split( ';', $field );
 
@@ -413,12 +413,12 @@ sub _get_derived_field( $self, $field ) {
         $key = $quoted;
     }
 
-    croak "unsupported field ${field}" unless exists $handlers{$key};
+    croak "unsupported field ${field}" unless exists $handlers->{$key};
 
     my $qfield = "\"${key}\"";
     $qfield .= ";${param}" if defined $param;
 
-    return ( maybe $qfield => $handlers{$key}->( $self->message, $param ) );
+    return ( maybe $qfield => $handlers->{$key}->( $self->message, $param ) );
 }
 
 sub _parse_dict( $self, $on, $input ) {
