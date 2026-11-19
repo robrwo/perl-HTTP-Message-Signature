@@ -144,6 +144,8 @@ sub verify($self, $tag = undef) {
     my $kid = unquote( $self->signature_input->{keyid} )
         or croak "not keyid was found in the signature-input";
 
+    # TODO: add support for looking up keys from a cache based on key id.
+
     my $key = first { $_->{kid} eq $kid } $self->public_keys->{keys}->@*
       or croak "keyid '${kid}' was not found in the public keys";
 
@@ -327,6 +329,10 @@ sub BUILDARGS( $class, @args ) {
 }
 
 =head1 KNOWN ISSUES
+
+=head2 Missing Signature-Agent headers
+
+The current version does not support caching keys.
 
 =head2 Multiple Signatures
 
