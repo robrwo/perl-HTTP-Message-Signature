@@ -83,7 +83,7 @@ has signature_agent => (
         my $agent = $self->headers->header("signature-agent");
         if ( $agent =~ /\A \w+ = /ax ) {
             my ($key) = $self->headers->header("signature-agent-key") || $self->signature_labels;
-            my $agents = Hash::MultiValue->new( map { _structured_split( '=', $_ ) } _structured_split( ',', $agent ) );
+            my $agents = $self->_parse_dict( ',', $agent );
             $agent = $agents->{ unquote($key) };
         }
         return $agent;
@@ -106,9 +106,7 @@ has signature_input => (
     isa     => InstanceOf ['Hash::MultiValue'],
     builder => sub($self) {
         my $input = $self->headers->header("signature-input");
-        # FIXME use parse_dict
-        # TODO: use a proper HTTP Structured Field (RFC 9651) parser
-        return Hash::MultiValue->new( map { _structured_split( '=', $_) } _structured_split( ';', $input ) );
+        return $self->_parse_dict( ';', $input );
     },
     handles => {
         signature_labels => 'keys',
@@ -120,9 +118,7 @@ has signature_header => (
     isa     => InstanceOf ['Hash::MultiValue'],
     builder => sub($self) {
         my $input = $self->headers->header("signature");
-
-        # TODO: use a proper HTTP Structured Field (RFC 9651) parser
-        return Hash::MultiValue->new( map { _structured_split( '=', $_)  } _structured_split( ',', $input ) );
+        return $self->_parse_dict( ',', $input );
     },
 );
 
