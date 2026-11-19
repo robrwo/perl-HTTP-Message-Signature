@@ -1,5 +1,7 @@
 package HTTP::Message::Signature;
 
+# ABSTRACT: Verify HTTP Message Signatures (RFC 9421)
+
 use v5.24;
 use Moo;
 
@@ -24,6 +26,8 @@ use URI;
 use experimental qw( signatures );
 
 use namespace::autoclean;
+
+our $VERSION = 'v0.0.1';
 
 =head1 SYNOPSIS
 
@@ -55,6 +59,10 @@ The user interface is subject to change.
 
 See also L</KNOWN ISSUES> and L</SECURITY CONSIDERATIONS>.
 
+=head1 DESCRIPTION
+
+This module supports verifying HTTP Message Signatures (RFC 9421), notably those used for Web Bot Authentication.
+
 =cut
 
 =attr message
@@ -62,6 +70,8 @@ See also L</KNOWN ISSUES> and L</SECURITY CONSIDERATIONS>.
 This is an L<HTTP::Message> or a L<Plack::Request>.
 
 Note that you can pass a L<PSGI> environment hash reference to the constructor.
+
+This is required.
 
 =cut
 
@@ -71,6 +81,12 @@ has message => (
     required => 1,
     handles  => [qw/ as_string headers /],
 );
+
+=attr is_request
+
+True if L</message> is a request.
+
+=cut
 
 has is_request => (
     is      => 'lazy',
@@ -82,12 +98,26 @@ has is_request => (
     init_arg => undef,
 );
 
+=attr is_response
+
+True if L</message> is a response.
+
+=cut
+
 has is_response => (
     is      => 'lazy',
     isa     => Bool,
     builder => sub($self) { $self->message->isa("HTTP::Response") },
     init_arg => undef,
 );
+
+=attr user_agent
+
+The user agent used for requesting keys.
+
+This is a L<HTTP::Tiny> object.
+
+=cut
 
 has user_agent => (
     is      => 'lazy',
@@ -96,6 +126,15 @@ has user_agent => (
         return HTTP::Tiny->new;
     },
 );
+
+=attr signature_agent
+
+This is the signature agent from the C<Signature-Agent> header.
+
+This should be a base URL but the actual value may be quoted.
+Some agents may send a full URL.
+
+=cut
 
 has signature_agent => (
     is      => 'lazy',
@@ -111,6 +150,12 @@ has signature_agent => (
     }
 );
 
+=attr signature_agent_uri
+
+This is the URI for the L</signature_agent> JWT key.
+
+=cut
+
 has signature_agent_uri => (
     is      => 'lazy',
     isa     => Uri,
@@ -122,6 +167,16 @@ has signature_agent_uri => (
         return $uri;
     },
 );
+
+=attr signature_input
+
+This is the C<Signature-Input> header, parsed into a L<Hash::MultiValue> object.
+
+=attr signature_labels
+
+This is an array of the labels from the L</signature_input>.
+
+=cut
 
 has signature_input => (
     is      => 'lazy',
@@ -135,6 +190,12 @@ has signature_input => (
     },
 );
 
+=attr signature_header
+
+This is the C<Signature> header, parsed into a L<Hash::MultiValue> object, where the keys are labels.
+
+=cut
+
 has signature_header => (
     is      => 'lazy',
     isa     => InstanceOf ['Hash::MultiValue'],
@@ -143,6 +204,16 @@ has signature_header => (
         return $self->_parse_dict( ',', join( ',', @input ) );
     },
 );
+
+=attr public_keys_json
+
+This is the raw JSON of the L</public_keys>.
+
+The keys will be fetched from L</signature_agent_uri>.
+
+Cached keys should be saved here instead of L</public_keys>.
+
+=cut
 
 has public_keys_json => (
     is      => 'lazy',
@@ -164,6 +235,12 @@ has public_keys_json => (
         croak "error retrieving ${uri}";
     }
 );
+
+=attr public_keys
+
+This is the parsed L</public_keys_json>.
+
+=cut
 
 has public_keys => (
     is      => 'lazy',
@@ -187,10 +264,28 @@ has require_tag => (
     predicate => 1,
 );
 
+=method is_expired
+
+Returns true if the signature is expired.
+
+This can be checked before verification to avoid the work of checking a signature.
+
+=cut
+
 sub is_expired($self) {
     my $expires = $self->signature_input->{expires} or return undef;
     return time > $expires;
 }
+
+=method verify
+
+  $sig->verify( $label ) or die "Signature ${label} is not verified";
+
+Returns true if the signature was verified.
+
+The C<$label> defaults to the first L</signature_labels> if omitted.
+
+=cut
 
 sub verify( $self, $label = undef ) {
 
@@ -435,6 +530,8 @@ rather than using an HTTP Structured Field (RFC 9651) parser.
 Your application should use an allowed list of trusted agents, rather than attempt to verify arbitrary requests.
 
 =head1 SEE ALSO
+
+L<Web Bot Auth|https://datatracker.ietf.org/wg/webbotauth/about/>
 
 L<HTTP Message Signatures for automated traffic|https://github.com/webbotauth/draft-ietf-webbotauth-httpsig-protocol/>
 
